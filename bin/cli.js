@@ -9,31 +9,31 @@ var through2 = require('through2');
 var pkg = require('../package.json');
 
 var options = nomnom
-    .script('bem-comment')
-    .help(pkg.description)
-    .options({
-        path: {
-            position: 0,
-            help: 'BEM files to comment',
-            required: true,
-            list: true
-        },
-        version: {
-            flag: true,
-            help: 'Print version',
-            callback: function() {
-                return pkg.version;
-            }
-        }
-    })
-    .parse();
+  .script('bem-comment')
+  .help(pkg.description)
+  .options({
+    path: {
+      position: 0,
+      help: 'BEM files to comment',
+      required: true,
+      list: true
+    },
+    version: {
+      flag: true,
+      help: 'Print version',
+      callback: function () {
+        return pkg.version;
+      }
+    }
+  })
+  .parse();
 
 fs.src(options.path || [])
-    .pipe(bemComment())
-    .pipe(through2.obj(function(file, enc, callback) {
-        console.log(file.contents.toString());
-        console.log(file.path);
-        callback(null, file);
-    }))
-    //.pipe(fs.dest('./'))
-    ;
+  .pipe(bemComment())
+  .pipe(through2.obj(function (file, enc, callback) {
+    console.log(file.contents.toString());
+    console.log(file.path);
+    callback(null, file);
+  }))
+  //.pipe(fs.dest('./'))
+;
