@@ -64,6 +64,19 @@ it('should not comment commented classes', function(cb) {
     }));
 });
 
+it('when in forced mode should re-comment commented classes', function(cb) {
+  var stream = bemComment({ force: true });
+
+  stream.on('data', function(file) {
+    assert.equal(file.contents.toString(), '// foo\n.foo{}');
+    cb();
+  });
+
+  stream.write(new File({
+    contents: new Buffer('// bar\n.foo{}')
+  }));
+});
+
 it('should not break the space indentation', function(cb) {
     var stream = bemComment();
 

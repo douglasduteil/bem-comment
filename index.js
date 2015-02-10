@@ -10,15 +10,17 @@
 
 var through2 = require('through2');
 
-module.exports = function bemComment() {
+module.exports = function bemComment(options) {
 
     var commentBuff;
+
+    options = options || {};
 
     return through2.obj(function transform(file, enc, callback) {
         commentBuff = [];
 
         var lines = file.contents.toString().split(/(?:\n|\r\n|\r)/g);
-        file.contents = Buffer(lines.map(processLine).join('\n'));
+        file.contents = Buffer(lines.reduce(processLine, []).join('\n'));
 
         callback(null, file);
     });
@@ -26,16 +28,17 @@ module.exports = function bemComment() {
 
     /**
      * Process a line adding the comment if supported
+     * @param {string[]} lines All the lines
      * @param {string} line The current line
      * @param {number} index The current line number
-     * @param {string[]} lines All the lines
      * @returns {string} the processed line.
      */
-    function processLine(line, index, lines) {
+    function processLine(lines, line, index) {
         var isClassLine = /^\s*[\.&][^\s]+/gi.test(line);
 
         if (!isClassLine || isUnsupportedSelector(line, index, lines)) {
-            return line;
+            lines.push(line);
+            return lines;
         }
 
         var indentation = '';
@@ -55,16 +58,24 @@ module.exports = function bemComment() {
             commentBuff = [name];
         }
 
-        // The last line is a comment
-        if (index > 0 && /^\s*\/\//.test(lines[index - 1])){
-          return line;
+
+        //The last line is a comment
+        var lenght = lines.length;
+
+        if (index > 0 && /^\s*\/\//.test(lines[lenght - 1])){
+            if (options.force){
+                lines.splice(index - 1, 1);
+            }else{
+                lines.push(line);
+                return lines;
+            }
         }
 
-        line = indentation + '\/\/ ' + commentBuff.join('') + '\n' + line;
+        lines.push(indentation + '\/\/ ' + commentBuff.join(''));
 
         commentBuff.splice(commentBuff.length - (line.match(/}/g) || []).length, 1);
-
-        return line;
+        lines.push(line);
+        return lines;
     }
 
     /**
