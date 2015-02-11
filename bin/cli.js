@@ -24,15 +24,19 @@ var options = nomnom
       callback: function () {
         return pkg.version;
       }
+    },
+    force: {
+      flag: true,
+      help: 'force rewrite all comments'
     }
   })
   .parse();
 
 fs.src(options.path || [])
-  .pipe(bemComment())
+  .pipe(bemComment(options))
   .pipe(through2.obj(function (file, enc, callback) {
+    //console.log(file.path);
     console.log(file.contents.toString());
-    console.log(file.path);
     callback(null, file);
   }))
   //.pipe(fs.dest('./'))

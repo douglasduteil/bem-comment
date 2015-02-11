@@ -35,8 +35,12 @@ module.exports = function bemComment(options) {
    */
   function processLine(lines, line, index) {
     var isClassLine = /^\s*[\.&][^\s]+/gi.test(line);
-
+    var n;
     if (!isClassLine || isUnsupportedSelector(line, index, lines)) {
+
+      // unstack if "}" found
+      n = (line.match(/}/g) || []).length;
+      commentBuff.splice( -n,n);
       lines.push(line);
       return lines;
     }
@@ -64,7 +68,7 @@ module.exports = function bemComment(options) {
 
     if (index > 0 && /^\s*\/\//.test(lines[lenght - 1])) {
       if (options.force) {
-        lines.splice(index - 1, 1);
+        lines.splice(- 1, 1);
       } else {
         lines.push(line);
         return lines;
@@ -72,8 +76,9 @@ module.exports = function bemComment(options) {
     }
 
     lines.push(indentation + '\/\/ ' + commentBuff.join(''));
+    n = (line.match(/}/g) || []).length;
+    commentBuff.splice( -n,n);
 
-    commentBuff.splice(commentBuff.length - (line.match(/}/g) || []).length, 1);
     lines.push(line);
     return lines;
   }

@@ -118,7 +118,7 @@ it('should ignore multiple definition on the same line', function (cb) {
   }));
 });
 
-it('should ignore multiple definition on the same line', function (cb) {
+it('should comment nested classes', function (cb) {
   var stream = bemComment();
 
   stream.on('data', function (file) {
@@ -147,6 +147,82 @@ it('should trace BEM element notation', function (cb) {
 
   stream.write(new File({
     contents: new Buffer('.foo{\n  &__bar{}\n}')
+  }));
+});
+
+
+it('should unstack BEM when the class end on the start line', function (cb) {
+  var stream = bemComment();
+
+  stream.on('data', function (file) {
+    assert.equal(file.contents.toString(),
+      '// foo\n.foo{\n  // foo__bar\n  &__bar{}\n  // foo__qux\n  &__qux{}\n}'
+    );
+    cb();
+  });
+
+  stream.write(new File({
+    contents: new Buffer('.foo{\n  &__bar{}\n  &__qux{}\n}')
+  }));
+});
+
+it('should unstack BEM when the class end on next line', function (cb) {
+  var stream = bemComment();
+
+  stream.on('data', function (file) {
+    assert.equal(file.contents.toString(),
+      '// foo\n.foo{\n  // foo__bar\n  &__bar{\n  }\n  // foo__qux\n  &__qux{}\n}'
+    );
+    cb();
+  });
+
+  stream.write(new File({
+    contents: new Buffer('.foo{\n  &__bar{\n  }\n  &__qux{}\n}')
+  }));
+});
+
+it('should unstack BEM when the inner class end on next line', function (cb) {
+  var stream = bemComment();
+
+  stream.on('data', function (file) {
+    assert.equal(file.contents.toString(),
+      '// foo\n.foo{\n  // foo__bar\n  &__bar{\n    // foo__bar__off\n    &__off{}\n  }\n  // foo__qux\n  &__qux{}\n}'
+    );
+    cb();
+  });
+
+  stream.write(new File({
+    contents: new Buffer('.foo{\n  &__bar{\n    &__off{}\n  }\n  &__qux{}\n}')
+  }));
+});
+
+it('should unstack BEM when the inner class and the class end on the same line', function (cb) {
+  var stream = bemComment();
+
+  stream.on('data', function (file) {
+    assert.equal(file.contents.toString(),
+      '// foo\n.foo{\n  // foo__bar\n  &__bar{\n    // foo__bar__off\n    &__off{}}\n  // foo__qux\n  &__qux{}\n}'
+    );
+    cb();
+  });
+
+  stream.write(new File({
+    contents: new Buffer('.foo{\n  &__bar{\n    &__off{}}\n  &__qux{}\n}')
+  }));
+});
+
+it('should not unstack BEM when meeting', function (cb) {
+  var stream = bemComment();
+
+  stream.on('data', function (file) {
+    assert.equal(file.contents.toString(),
+      '// foo\n.foo{\n  // foo__bar\n  &__bar{\n    // foo__bar__off\n    &__off{}}\n  // foo__qux\n  &__qux{}\n}'
+    );
+    cb();
+  });
+
+  stream.write(new File({
+    contents: new Buffer('.foo{\n  &__bar{\n    &__off{}}\n  &__qux{}\n}')
   }));
 });
 
